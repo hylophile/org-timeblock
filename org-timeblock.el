@@ -177,7 +177,7 @@ are tagged with a tag in car."
 (defvar org-timeblock-svg-obj nil)
 
 (persist-defvar org-timeblock-list-entries-pos nil
-  "Saved positions for entries in `org-timeblock-list-mode'.
+                "Saved positions for entries in `org-timeblock-list-mode'.
 Nested alist of saved positions of the entries for each date that
 a user have previously opened in `org-timeblock-list-mode'.")
 
@@ -201,7 +201,7 @@ a user have previously opened in `org-timeblock-list-mode'.")
   "The name of the buffer displaying the list of tasks and events.")
 
 (persist-defvar org-timeblock-list-sortline-pos nil
-  "Sort indicator line position.
+                "Sort indicator line position.
 The line position of the sort line which is displayed in
 `org-timeblock-list-mode' when orgmode tasks are manually
 placed.  Used as a simple separator to distinguish manually sorted
@@ -287,16 +287,16 @@ tasks and those tasks that have not been sorted yet.")
     (setq image-transform-resize nil
 	  header-line-format
 	  (let* ((dates (org-timeblock-get-dates))
-		 (left-fringe (/ (car (window-fringes window)) (default-font-width)))
-		 (max-length (/ (+ (/ (window-body-width window t) (default-font-width)) left-fringe) (length dates)))
+		 (left-fringe (/ (car (window-fringes window)) (float (default-font-width))))
+		 (max-length (round (/ (+ (round (/ (window-body-width window t) (float (default-font-width)))) (float (round left-fringe))) (float (length dates)))))
 		 (date-format
 		  (pcase max-length
-		    ((pred (< 15)) "[%Y-%m-%d %a]")
-		    ((pred (< 11)) "[%Y-%m-%d]")
-		    ((pred (< 6)) "[%m-%d]")
-		    ((pred (< 3)) "[%d]")))
+		    ((pred (< 15)) "%Y-%m-%d %a")
+		    ((pred (< 11)) "%Y-%m-%d")
+		    ((pred (< 6)) "%m-%d")
+		    ((pred (< 3)) "%d")))
 		 (right-margin (format "%% -%ds" max-length))
-		 (result (make-string left-fringe ? )))
+		 (result (make-string (+ 1 (round left-fringe)) ? )))
 	    (dotimes (iter (length dates))
 	      (cl-callf concat result
 		(propertize (format right-margin (ts-format date-format (nth iter dates))) 'face
@@ -757,13 +757,8 @@ Default background color is used when BASE-COLOR is nil."
 			 y
 			 (+ column-width (* column-width iter))
 			 y
-			 :stroke-dasharray "4"
-			 :stroke hour-lines-color)
-			(svg-text
-			 org-timeblock-svg-obj (format "%d" lines-iter)
-			 :y (+ y 5)
-			 :x (* column-width iter)
-			 :fill (face-attribute 'default :foreground))))
+                         :stroke-width "0.5"
+			 :stroke hour-lines-color)))
 		    ;; Drawing all the entries inside the timeline
 		    (dolist (entry entries)
 		      (when-let ((length (1+ (length (seq-uniq
@@ -778,13 +773,12 @@ Default background color is used when BASE-COLOR is nil."
 							    (org-timeblock-intersect-p entry x)))
 							entries))
 						      #'eq))))
-				 (y (get-text-property 0 'y entry))
-				 (block-height (get-text-property 0 'block-height entry))
+				 (y (- (get-text-property 0 'y entry) 2))
+				 (block-height (+ 2 (get-text-property 0 'block-height entry)))
 				 ((> (+ y block-height) 0))
 				 (x (+ (+ timeline-left-padding (round (* (1- (cdr (assoc (get-text-property 0 'id entry) columns))) (/ block-max-width length))))
-				       (* column-width iter)
-				       (if (org-timeblock-get-event entry) 2 1)))
-				 (block-width (- (round (/ block-max-width length)) (if (org-timeblock-get-event entry) 2 1)))
+				       (* window-width iter)))
+				 (block-width (round (/ block-max-width length)))
 				 (title (concat (get-text-property 0 'title entry)
 						(get-text-property 0 'n-day-indicator entry)))
 				 ;; Splitting the title of an entry
@@ -819,36 +813,40 @@ Default background color is used when BASE-COLOR is nil."
 			  ;; Appending generated rectangle for current entry
 			  (svg-rectangle org-timeblock-svg-obj x y block-width block-height
 					 :column (1+ iter)
-					 :stroke (if (org-timeblock-get-event entry) "#5b0103" "#cdcdcd")
-					 :stroke-width (if (org-timeblock-get-event entry) 2 1)
-					 :opacity "0.7"
+                                         :stroke-width "0"
+                                         :opacity "0.5"
 					 :fill (or (car colors) (funcall get-color title))
 					 :id (format "%s_%d" (get-text-property 0 'id entry) (1+ iter)))
 			  ;; Setting the title of current entry
 			  (let ((y (- y 5)))
 			    (dolist (heading-part heading-list)
 			      (svg-text org-timeblock-svg-obj heading-part
-					:x x
-					:y (cl-incf y (default-font-height))
+					:x (+ 2 x)
+                                        :font-family "Jost"
+					:y (+ 2 (cl-incf y (default-font-height)))
 					:fill (or (cadr colors) (face-attribute 'default :foreground))
 					:font-size (aref (font-info (face-font 'default)) 2))))
 			  (when time-string
 			    (svg-text org-timeblock-svg-obj time-string
+                                      :font-family "Jost"
 				      :x (- (+ x block-width) (* (length time-string) (default-font-width)))
 				      :y (- (+ y block-height) 2)
 				      :fill (or (cadr colors) hour-lines-color)
 				      :font-size (aref (font-info (face-font 'default)) 2))))))
 		    ;; Drawing current time indicator
-		    (and org-timeblock-current-time-indicator
-			 (org-timeblock-ts-date= (nth iter dates) cur-time)
-			 (svg-polygon
-			  org-timeblock-svg-obj
-			  (list
-			   (cons (+ (* column-width iter) (- block-max-width 5)) cur-time-indicator)
-			   (cons (+ (* column-width iter) block-max-width 25) (- cur-time-indicator 5))
-			   (cons (+ (* column-width iter) block-max-width 25) (+ cur-time-indicator 5)))
-			  :fill-color "red")))
-		(let ((message "No data."))
+		    (when (and org-timeblock-current-time-indicator
+			       (org-timeblock-ts-date= (nth iter dates) (ts-now)))
+		      (svg-polygon
+		       org-timeblock-svg-obj
+		       (list
+			(cons (+ (* window-width iter) (- block-max-width 5)) cur-time-indicator)
+			(cons (+ (* window-width iter) block-max-width 25) (- cur-time-indicator 5))
+			(cons (+ (* window-width iter) block-max-width 25) (+ cur-time-indicator 5)))
+		       :fill-color "red")))
+		(let* ((window (get-buffer-window org-timeblock-buffer))
+		       (window-height (window-body-height window t))
+		       (window-width (/ (window-body-width window t) (length dates)))
+		       (message ""))
 		  (svg-text org-timeblock-svg-obj message
 			    :y (/ org-timeblock-svg-height 2)
 			    :x (+ (- (/ column-width 2) (/ (* (default-font-width) (length message)) 2))
@@ -973,7 +971,7 @@ Time format is \"HHMM\""
 			 (org-timeblock-ts-date<= date (cdr org-timeblock-daterange))
 			 (org-timeblock-ts-date<= (car org-timeblock-daterange) date))))
 	  (org-timeblock-jump-to-day prev-date))
-	  (org-timeblock--schedule new-start-ts new-end-ts eventp)))))
+	(org-timeblock--schedule new-start-ts new-end-ts eventp)))))
 
 (defun org-timeblock--daterangep (timestamp)
   "Return t if org timestamp object TIMESTAMP is a daterange with no time."
@@ -1451,8 +1449,8 @@ SELECT prefix argument provides."
     (ts-parse (buffer-substring (line-beginning-position) (line-end-position)))))
 
 (cl-defun org-timeblock-new-task (&optional (date (pcase major-mode
-					 (`org-timeblock-mode (nth (1- org-timeblock-current-column) (org-timeblock-get-dates)))
-					 (`org-timeblock-list-mode (org-timeblock-list-get-current-date)))))
+					            (`org-timeblock-mode (nth (1- org-timeblock-current-column) (org-timeblock-get-dates)))
+					            (`org-timeblock-list-mode (org-timeblock-list-get-current-date)))))
   "Create a task scheduled to DATE.
 If DATE is nil, use the date in the current view.
 
