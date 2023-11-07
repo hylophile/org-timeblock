@@ -836,13 +836,21 @@ Default background color is used when BASE-COLOR is nil."
 		    ;; Drawing current time indicator
 		    (when (and org-timeblock-current-time-indicator
 			       (org-timeblock-ts-date= (nth iter dates) (ts-now)))
-		      (svg-polygon
+		      (svg-circle
 		       org-timeblock-svg-obj
-		       (list
-			(cons (+ (* window-width iter) (- block-max-width 5)) cur-time-indicator)
-			(cons (+ (* window-width iter) block-max-width 25) (- cur-time-indicator 5))
-			(cons (+ (* window-width iter) block-max-width 25) (+ cur-time-indicator 5)))
-		       :fill-color "red")))
+		       (+ (* window-width iter) 10)
+                       cur-time-indicator
+                       8
+		       :fill-color "#00BFFF")
+                      (svg-line
+		       org-timeblock-svg-obj
+		       (+ (* window-width iter) 10)
+		       cur-time-indicator
+		       (+ (* window-width iter) block-max-width 20)
+		       cur-time-indicator
+                       :stroke-width "5"
+                       :opacity "0.3"
+		       :stroke "#00BFFF")))
 		(let* ((window (get-buffer-window org-timeblock-buffer))
 		       (window-height (window-body-height window t))
 		       (window-width (/ (window-body-width window t) (length dates)))
