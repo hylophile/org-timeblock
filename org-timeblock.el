@@ -1071,7 +1071,7 @@ If EVENTP is non-nil, use entry's TIMESTAMP property."
 
 (defun org-timeblock-get-event-timestamp ()
   "Return an org-element timestamp object of an event at point."
-  (when-let ((ts (org-entry-get nil "TIMESTAMP")))
+  (when-let ((ts (or (org-entry-get nil "DEADLINE") (org-entry-get nil "TIMESTAMP"))))
     (with-temp-buffer
       (insert ts)
       (goto-char (point-min))
