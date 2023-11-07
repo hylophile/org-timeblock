@@ -749,7 +749,7 @@ Default background color is used when BASE-COLOR is nil."
 					(throw 'found-column k))))))))
 		    ;; Drawing hour lines
 		    (let ((lines-iter (if (> min-hour 0) (1- min-hour) 0)) y)
-		      (while (< (cl-incf lines-iter) max-hour)
+		      (while (< (cl-incf lines-iter 2) max-hour)
 			(setq y (round (* scale (- lines-iter min-hour) 60)))
 			(svg-line
 			 org-timeblock-svg-obj
