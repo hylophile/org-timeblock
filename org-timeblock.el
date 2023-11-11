@@ -778,7 +778,7 @@ Default background color is used when BASE-COLOR is nil."
 				 (block-height (+ 2 (get-text-property 0 'block-height entry)))
 				 ((> (+ y block-height) 0))
 				 (x (+ (+ timeline-left-padding (round (* (1- (cdr (assoc (get-text-property 0 'id entry) columns))) (/ block-max-width length))))
-				       (* window-width iter)))
+				       (* column-width iter)))
 				 (block-width (round (/ block-max-width length)))
 				 (title (concat (get-text-property 0 'title entry)
 						(get-text-property 0 'n-day-indicator entry)))
@@ -839,22 +839,22 @@ Default background color is used when BASE-COLOR is nil."
 			       (org-timeblock-ts-date= (nth iter dates) (ts-now)))
 		      (svg-circle
 		       org-timeblock-svg-obj
-		       (+ (* window-width iter) 10)
+		       (+ (* column-width iter) 10)
                        cur-time-indicator
                        8
 		       :fill-color "#00BFFF")
                       (svg-line
 		       org-timeblock-svg-obj
-		       (+ (* window-width iter) 10)
+		       (+ (* column-width iter) 10)
 		       cur-time-indicator
-		       (+ (* window-width iter) block-max-width 20)
+		       (+ (* column-width iter) block-max-width 20)
 		       cur-time-indicator
                        :stroke-width "5"
                        :opacity "0.3"
 		       :stroke "#00BFFF")))
 		(let* ((window (get-buffer-window org-timeblock-buffer))
 		       (window-height (window-body-height window t))
-		       (window-width (/ (window-body-width window t) (length dates)))
+		       (column-width (/ (window-body-width window t) (length dates)))
 		       (message ""))
 		  (svg-text org-timeblock-svg-obj message
 			    :y (/ org-timeblock-svg-height 2)
@@ -865,13 +865,13 @@ Default background color is used when BASE-COLOR is nil."
 	    (svg-print org-timeblock-svg-obj))
 	(let* ((window (get-buffer-window org-timeblock-buffer))
 	       (window-height (window-body-height window t))
-	       (window-width (window-body-width window t))
+	       (column-width (window-body-width window t))
 	       (message "No data."))
-	  (setq org-timeblock-svg-obj (svg-create window-width window-height))
+	  (setq org-timeblock-svg-obj (svg-create column-width window-height))
 	  (svg-text
 	   org-timeblock-svg-obj message
 	   :y (/ window-height 2)
-	   :x (- (/ window-width 2) (/ (* (default-font-width) (length message)) 2))
+	   :x (- (/ column-width 2) (/ (* (default-font-width) (length message)) 2))
 	   :fill (face-attribute 'default :foreground))
 	  (svg-print org-timeblock-svg-obj)))
       (setq org-timeblock-mark-data nil)
@@ -1652,7 +1652,7 @@ If EVENTP is non-nil the entry is considered as an event."
   (when-let ((pos (org-timeblock-mouse-pixel-pos))
 	     (inhibit-read-only t)
 	     (window (get-buffer-window org-timeblock-buffer))
-	     (window-width (window-body-width window t)))
+	     (column-width (window-body-width window t)))
     (org-timeblock-unselect-block)
     (when-let ((found (car (dom-search
 			    org-timeblock-svg-obj
@@ -1668,7 +1668,7 @@ If EVENTP is non-nil the entry is considered as an event."
       (re-search-forward (format "id=\"%s\" fill=\"\\([^\"]+\\)\"" (dom-attr found 'id)) nil t)
       (setq org-timeblock-prev-selected-block-color (match-string-no-properties 1))
       (replace-match org-timeblock-sel-block-color nil nil nil 1))
-    (setq org-timeblock-current-column (1+ (/ (car pos) (/ window-width org-timeblock-n-days-view))))
+    (setq org-timeblock-current-column (1+ (/ (car pos) (/ column-width org-timeblock-n-days-view))))
     (org-timeblock-redisplay)
     (org-timeblock-show-olp-maybe (org-timeblock-selected-block-marker))))
 
