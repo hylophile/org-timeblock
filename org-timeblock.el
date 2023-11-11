@@ -758,6 +758,7 @@ Default background color is used when BASE-COLOR is nil."
 			 (+ column-width (* column-width iter))
 			 y
                          :stroke-width "0.5"
+                         :opacity "0.5"
 			 :stroke hour-lines-color)))
 		    ;; Drawing all the entries inside the timeline
 		    (dolist (entry entries)
